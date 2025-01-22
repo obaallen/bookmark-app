@@ -1,4 +1,4 @@
-#!/Users/allenobayagbon/bookmark-pro-api/venv/bin/python3.10
+#!/Users/allenobayagbon/bookmark-pro/bookmark-backend/venv/bin/python3.10
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -1,13 +1,41 @@
 import React, { useState } from "react";
+import axiosInstance from "../axiosInstance";
 
 function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [message, setMessage] = useState(null);
 
-  const handleSubmit = (e) => {
+  // Handle the actual signup + do validation
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: call signup endpoint in backend
-    console.log("Signing up with:", { email, password });
+    if (password !== confirmation) {
+      setMessage("Passwords do not match");
+      return;
+    }
+    try {
+      const response = await axiosInstance.post("/signup", {
+        email,
+        password,
+        confirmation,
+      });
+
+      console.log("Signup response:", response);
+
+      // Simulate successful signup
+      if (response.status === 200) {
+        setMessage("Signup successful!");
+        setEmail("");
+        setPassword("");
+        setConfirmation("");
+        // Redirect to the homepage
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Signup failed:", error);
+      setMessage("Signup failed. Please try again.");
+    }
   };
 
   return (
@@ -41,6 +69,19 @@ function Signup() {
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="block mb-1 font-medium" htmlFor="confirmation">
+            Confirm Password
+          </label>
+          <input
+            className="w-full border rounded px-3 py-2"
+            type="password"
+            id="confirmation"
+            value={confirmation}
+            onChange={(e) => setConfirmation(e.target.value)}
             required
           />
         </div>

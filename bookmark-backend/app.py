@@ -4,57 +4,66 @@ from flask_session import Session
 from flask_migrate import Migrate
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
+from flask_cors import CORS
 from helpers import apology, login_required
-from models import User, Collection, Bookmark
+from models import db, User, Collection, Bookmark
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookmarks.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
 
-db = SQLAlchemy(app)
+db.init_app(app)
 migrate = Migrate(app, db)
+CORS(app)
 
-@app.route("/Signup", methods=["GET", "POST"])
-def Signup():
-    """Register user"""
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-        # Ensure username was submitted
-        email = request.form.get("email")
-        password = request.form.get("password")
-        confirmation = request.form.get("confirmation")
+@app.route('/test-session', methods=['GET'])
+def test_session():
+    session['test_key'] = 'test_value'
+    return f"Session test_key: {session.get('test_key')}"
 
-        if not email:
-            return apology("must provide email", 400)
+@app.route("/signup", methods=["POST"])
+def signup():
+    """
+    Register user
+    User reached route via POST (as by submitting a form via POST)
+    """
+    # Perform some validation
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    confirmation = data.get("confirmation")
 
-        # Ensure password was submitted
-        elif not password:
-            return apology("must provide password", 400)
+    if not email:
+        return jsonify({"error": "must provide email"}), 400
 
-        # Ensure confirmation was submitted
-        elif not confirmation:
-            return apology("must provide confirmation", 400)
+    # Ensure password was submitted
+    elif not password:
+        return jsonify({"error": "must provide password"}), 400
 
-        # Ensure confirmation matches password
-        elif confirmation != password:
-            return apology("password and confirmation must match", 400)
+    # Ensure confirmation was submitted
+    elif not confirmation:
+        return jsonify({"error": "must provide confirmation"}), 400
 
-        # attempt to insert detail in database
-        try:
-            hashed_password = generate_password_hash(password)
-            new_user = User(email=email, hash=hashed_password)
-            db.session.add(new_user)
-            db.session.commit()
-            Session["user_id"] = new_user.id
-            # Redirect user to home page
-            return redirect("/")
-        except:
-            return apology("user already exists", 400)
+    # Ensure confirmation matches password
+    elif confirmation != password:
+        return jsonify({"error": "password and confirmation must match"}), 400
 
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return redirect("/Signup")
-
+    # attempt to insert detail in database
+    try:
+        hashed_password = generate_password_hash(password)
+        new_user = User(email=email, hash=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+        session["user_id"] = new_user.id
+        
+        # Return success response
+        return jsonify({"message": "User registered successfully"}), 200
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": "User already exists or an error occurred"}), 400
 
 @app.route('/bookmarks', methods=['POST'])
 def create_bookmark():
