@@ -1,17 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 import axiosInstance from "../axiosInstance";
 
 function Signup() {
+  const navigate = useNavigate();
+  const { isAuthenticated, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const [message, setMessage] = useState(null);
+  const [message, setMessage] = useState("");
+
+  // If already authenticated, redirect to dashboard
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, loading, navigate]);
+  
 
   // Handle the actual signup + do validation
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmation) {
-      setMessage("Passwords do not match");
+      alert("Passwords do not match");
       return;
     }
     try {
@@ -25,16 +37,18 @@ function Signup() {
 
       // Simulate successful signup
       if (response.status === 200) {
-        setMessage("Signup successful!");
+        setMessage(response.data.message);
         setEmail("");
         setPassword("");
         setConfirmation("");
+        alert(response.data.message);
         // Redirect to the homepage
         navigate("/");
       }
     } catch (error) {
       console.error("Signup failed:", error);
       setMessage("Signup failed. Please try again.");
+      alert("Signup failed. Please try again.");
     }
   };
 

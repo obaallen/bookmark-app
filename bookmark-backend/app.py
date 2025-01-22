@@ -11,22 +11,30 @@ from models import db, User, Collection, Bookmark
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookmarks.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
+app.config['SESSION_TYPE'] = 'filesystem'  
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_COOKIE_NAME'] = 'session'
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = False
 Session(app)
 
 db.init_app(app)
 migrate = Migrate(app, db)
-CORS(app)
+CORS(app, supports_credentials=True, origins="http://localhost:5173",)
 
-@app.route('/test-session', methods=['GET'])
-def test_session():
-    session['test_key'] = 'test_value'
-    return f"Session test_key: {session.get('test_key')}"
+@app.before_request
+def log_request_info():
+    print("Request Cookies:", request.cookies)  # Log all cookies sent by the client
+    print("Session Data:", session)     
+
+@app.after_request
+def log_cookie_header(response):
+    print("Set-Cookie Header:", response.headers.get("Set-Cookie"))
+    return response
 
 @app.route("/signup", methods=["POST"])
 def signup():
-    """
+    """s
     Register user
     User reached route via POST (as by submitting a form via POST)
     """
@@ -58,12 +66,19 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
         session["user_id"] = new_user.id
-        
+        print("Session data:", session)
         # Return success response
         return jsonify({"message": "User registered successfully"}), 200
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error": "User already exists or an error occurred"}), 400
+
+@app.route("/check-auth", methods=["GET"])
+def check_auth():
+    print("Session data:", session)
+    if session.get("user_id"):  
+        return jsonify({"isAuthenticated": True}), 200
+    return jsonify({"isAuthenticated": False}), 401
 
 @app.route('/bookmarks', methods=['POST'])
 def create_bookmark():

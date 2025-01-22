@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Collections from "./pages/Collections";
 import CollectionDetail from "./pages/CollectionDetail";
@@ -20,7 +21,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
 
         {/* Private routes (Layout with sidebar) */}
-        <Route path="/" element={<Layout />}>
+        <Route path="/" element={<ProtectedRoute> <Layout /> </ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="collections" element={<Collections />} />
