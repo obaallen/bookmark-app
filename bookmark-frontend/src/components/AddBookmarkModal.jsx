@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import useAuth from "../hooks/useAuth";
+import axiosInstance from "../axiosInstance";
 
 export default function AddBookmarkModal({ collections, onClose, onSave }) {
   const [url, setUrl] = useState("");
@@ -9,23 +11,37 @@ export default function AddBookmarkModal({ collections, onClose, onSave }) {
   const [creatingNewCollection, setCreatingNewCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     let finalCollectionId = collectionId;
     if (creatingNewCollection && newCollectionName.trim()) {
-      finalCollectionId = Date.now(); // Mock ID
+      // Execute API call to create collection
+      const response = await fetch('http://127.0.0.1:5000/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newCollectionName })
+      });
+      const data = await response.json();
+      finalCollectionId = data.collection.id;
     }
 
-    const newBookmark = {
-      id: Date.now(),
-      url,
-      title,
-      description,
-      collectionId: finalCollectionId,
-    };
+    // Create the bookmark
+    const response = await fetch('http://127.0.0.1:5000/bookmarks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        description,
+        collectionId: finalCollectionId,
+      })
+    });
 
-    onSave(newBookmark, newCollectionName.trim());
+    if (!response.ok) {
+      throw new Error('Failed to create bookmark');
+    }
+
+    onSave();
 
     // Reset form and close modal
     setUrl("");

@@ -1,27 +1,45 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useState, useEffect } from 'react';
 
-export default function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); 
+function useAuth() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    console.log("Checking authentication...");
 
-    // Check if the user is authenticated by calling the /check-auth endpoint
-    axios
-      .get("http://127.0.0.1:5000/check-auth", { withCredentials: true })
-      .then((response) => {
-        setIsAuthenticated(response.data.isAuthenticated);
-        setLoading(false); 
-        console.log("response");
-        console.log(response.data);
-      })
-      .catch(() => {
-        console.log("Checking authentication3...");
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        console.log('Current cookies:', document.cookie); // Debug cookies
+        const request = new Request('http://127.0.0.1:5000/check-auth', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        console.log('Request details:', {
+          url: request.url,
+          method: request.method,
+          credentials: request.credentials,
+          headers: [...request.headers.entries()]
+        });
+        const response = await fetch(request);
+        console.log('Auth check response:', {
+          status: response.status,
+          headers: [...response.headers.entries()],
+          ok: response.ok
+        });
+        const data = await response.json();
+        console.log('Auth check data:', data);
+        setIsAuthenticated(data.isAuthenticated);
+      } catch (error) {
+        console.error('Auth check error:', error);
         setIsAuthenticated(false);
-        setLoading(false); 
-      });
+      } finally {
+        console.log('Auth check complete. Loading:', false);
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   return { isAuthenticated, loading };
 }
+
+export default useAuth;

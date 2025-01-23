@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import useAuth from "../hooks/useAuth";
+import axiosInstance from "../axiosInstance";
 
 /**
  * AddBookmarkForm
- * @param {Array} collections - Array of existing collections { id, name }
- * @param {Function} onSave - Callback when form is submitted (newBookmark, newCollectionName) => {}
+ * @param {Array} collections 
+ * @param {Function} onSave 
  */
 function AddBookmarkForm({ collections = [], onSave }) {
   const [url, setUrl] = useState("");
@@ -29,7 +31,7 @@ function AddBookmarkForm({ collections = [], onSave }) {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
 
     let finalCollectionId = collectionId;
@@ -37,20 +39,34 @@ function AddBookmarkForm({ collections = [], onSave }) {
 
     // If user is creating a new collection
     if (creatingNewCollection && finalNewCollectionName) {
-      // In a real app, you'd call an API to create the collection,
-      // get its new ID, then assign it here. For now, we can mock:
-      finalCollectionId = Date.now(); // mock ID
+      // Execute API call to create collection
+      const response = await fetch('http://127.0.0.1:5000/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ title: finalNewCollectionName })
+      });
+      const data = await response.json();
+      finalCollectionId = data.collection.id;
     }
 
-    const newBookmark = {
-      url,
-      description,
-      collectionId: finalCollectionId, 
-      // Possibly other fields like title, tags, etc.
-    };
+    // Create the bookmark
+    const response = await fetch('http://127.0.0.1:5000/bookmarks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        url,
+        description,
+        collectionId: finalCollectionId,
+      })
+    });
 
-    // onSave callback lets the parent handle the actual creation logic
-    onSave(newBookmark, finalNewCollectionName);
+    if (!response.ok) {
+      throw new Error('Failed to create bookmark');
+    }
+
+    onSave();
 
     // Reset form
     setUrl("");

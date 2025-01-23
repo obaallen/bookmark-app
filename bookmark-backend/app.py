@@ -7,29 +7,48 @@ from datetime import datetime
 from flask_cors import CORS
 from helpers import apology, login_required
 from models import db, User, Collection, Bookmark
+from datetime import timedelta
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookmarks.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SESSION_TYPE'] = 'filesystem'  
-app.config['SESSION_PERMANENT'] = False
-app.config['SESSION_COOKIE_NAME'] = 'session'
-app.config["SESSION_COOKIE_SAMESITE"] = "None"
-app.config["SESSION_COOKIE_SECURE"] = False
+# Update secret key (use a real secret key in production)
+app.secret_key = 'your-secret-key-here'  
+
+# Update session configuration
+app.config.update(
+    SESSION_COOKIE_SECURE=False,  # False for local development
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_NAME='session',
+    SESSION_COOKIE_DOMAIN='127.0.0.1',  # Set this to match your API domain
+    SESSION_COOKIE_PATH='/',
+    SESSION_TYPE='filesystem',
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7)
+)
 Session(app)
 
 db.init_app(app)
 migrate = Migrate(app, db)
-CORS(app, supports_credentials=True, origins="http://localhost:5173",)
+CORS(app,
+     supports_credentials=True,
+     origins=["http://127.0.0.1:5173"],  # Use 127.0.0.1 instead of localhost
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     expose_headers=["Set-Cookie"])
 
 @app.before_request
 def log_request_info():
-    print("Request Cookies:", request.cookies)  # Log all cookies sent by the client
-    print("Session Data:", session)     
+    print("== Before Request ==")
+    print("Request Cookies:", request.cookies)
+    print("Flask Session:", session)    
 
 @app.after_request
 def log_cookie_header(response):
+    print("== After Request ==")
     print("Set-Cookie Header:", response.headers.get("Set-Cookie"))
+    print("Flask Session now:", session)
+    print("CORS Headers:", response.headers)
     return response
 
 @app.route("/signup", methods=["POST"])
@@ -66,12 +85,49 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
         session["user_id"] = new_user.id
+        session.modified = True
         print("Session data:", session)
         # Return success response
         return jsonify({"message": "User registered successfully"}), 200
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error": "User already exists or an error occurred"}), 400
+
+@app.route("/login", methods=["POST"])
+def login():
+    """Log user in"""
+    # Forget any user_id
+    session.clear()
+    # Perform some validation
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email:
+        return jsonify({"error": "must provide email"}), 400
+    # Ensure password was submitted
+    elif not password:
+        return jsonify({"error": "must provide password"}), 400
+    # Query database for username
+    user = User.query.filter_by(email=email).first()
+
+    # Ensure username exists and password is correct
+    if not user or not check_password_hash(user.hash, password):
+        return jsonify({"error": "invalid username and/or password"}), 400
+
+    # Remember which user has logged in
+    session["user_id"] = user.id
+    session.modified = True
+    print("LoginSession data set:", session)
+    return jsonify({"message": "User logged in successfully"}), 200
+
+@app.route("/logout")
+def logout():
+    """Log user out"""
+    # Forget any user_id
+    session.clear()
+    # Redirect user to login form
+    return jsonify({"message": "User logged out successfully"}), 200
 
 @app.route("/check-auth", methods=["GET"])
 def check_auth():
@@ -100,7 +156,7 @@ def create_bookmark():
         'url': bookmark.url,
         'description': bookmark.description,
         'created_at': bookmark.created_at
-    }}), 201
+    }}), 200
 
 @app.route('/bookmarks', methods=['GET'])
 def get_bookmarks():
@@ -153,6 +209,39 @@ def delete_bookmark(bookmark_id):
     db.session.commit()
 
     return jsonify({'message': 'Bookmark deleted successfully'}), 200
+
+@app.route('/collections', methods=['POST'])
+def create_collection():
+    data = request.get_json()
+    title = data.get('title')
+    description = data.get('description', '')
+
+    if not title:
+        return jsonify({'error': 'Collection name is required'}), 400
+
+    collection = Collection(title=title, description=description)
+    db.session.add(collection)
+    db.session.commit()
+
+    return jsonify({'message': 'Collection created successfully', 'collection': {
+        'id': collection.id,
+        'title': collection.title,
+        'description': collection.description,
+        'created_at': collection.created_at
+    }}), 200
+
+@app.route('/collections', methods=['GET'])
+def get_collections():
+    collections = Collection.query.all()
+    result = []
+    for collection in collections:
+        result.append({
+            'id': collection.id,
+            'title': collection.title,
+            'description': collection.description,
+            'created_at': collection.created_at
+        })
+    return jsonify(result), 200
 
 if __name__ == '__main__':
     with app.app_context():
