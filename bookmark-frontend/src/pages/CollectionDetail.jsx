@@ -3,27 +3,36 @@ import { useParams } from "react-router-dom";
 import BookmarkCard from "../components/BookmarkCard";
 
 async function fetchCollectionById(id) {
-  return {
-    id,
-    name: "Recipes",
-    bookmarks: [
-      {
-        id: 101,
-        url: "https://cookingblog.com/pizza",
-        title: "Pizza Recipe",
-        description: "Delicious homemade pizza guide",
-      },
-    ],
-  };
+  const response = await fetch(`http://127.0.0.1:5000/collection_bookmarks/${id}`, {
+    method: 'GET',
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'include'
+  });
+  const data = await response.json();
+  return data;
+}
+
+async function fetchCollectionTitle(id) {
+  const response = await fetch(`http://127.0.0.1:5000/collections/${id}`, {
+    method: 'GET',
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'include'
+  });
+  const data = await response.json();
+  return data;
 }
 
 export default function CollectionDetail() {
   const { collectionId } = useParams();
   const [collection, setCollection] = useState(null);
+  const [collectionTitle, setCollectionTitle] = useState(null);
 
   useEffect(() => {
     fetchCollectionById(collectionId).then((data) => {
       setCollection(data);
+    });
+    fetchCollectionTitle(collectionId).then((data) => {
+      setCollectionTitle(data);
     });
   }, [collectionId]);
 
@@ -40,9 +49,12 @@ export default function CollectionDetail() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">{collection.name}</h1>
+      <h1 className="text-2xl font-bold mb-4">{collectionTitle?.title}</h1>
+      {collection.length === 0 && (
+        <p className="text-gray-500 text-center py-8">No bookmarks for collection</p>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {collection.bookmarks.map((bookmark) => (
+        {collection.map((bookmark) => (
           <BookmarkCard
             key={bookmark.id}
             bookmark={bookmark}

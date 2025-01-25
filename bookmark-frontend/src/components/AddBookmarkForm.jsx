@@ -1,27 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
-import useAuth from "../hooks/useAuth";
-import axiosInstance from "../axiosInstance";
+import { bookmarksAPI, collectionsAPI } from "../services/api";
 
-/**
- * AddBookmarkForm
- * @param {Array} collections 
- * @param {Function} onSave 
- */
-function AddBookmarkForm({ collections = [], onSave }) {
+function AddBookmarkForm({ onSave }) {
+  const [collections, setCollections] = useState([]); // Manage collections as local state
+  const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [description, setDescription] = useState("");
-
-  // Collection selection logic
-  const [collectionId, setCollectionId] = useState("general"); // default
+  const [collectionId, setCollectionId] = useState(""); // Default is empty until collections are fetched
   const [creatingNewCollection, setCreatingNewCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
+  const [isLoading, setIsLoading] = useState(true);  // Add loading state
 
-  // Handle collection dropdown changes
+  // Fetch collections when the component mounts
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        setIsLoading(true);
+        const data = await collectionsAPI.getAll();
+        setCollections(data);
+        if (data.length > 0) {
+          setCollectionId(data[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching collections:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCollections();
+  }, []);
+
   const handleCollectionChange = (e) => {
     const value = e.target.value;
     if (value === "new") {
-      // User wants to create a new collection
       setCreatingNewCollection(true);
       setCollectionId("");
     } else {
@@ -30,50 +43,37 @@ function AddBookmarkForm({ collections = [], onSave }) {
     }
   };
 
-  // Handle form submission
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      let finalCollectionId = collectionId;
+      
+      if (creatingNewCollection && newCollectionName.trim()) {
+        const collectionData = await collectionsAPI.create({
+          title: newCollectionName.trim(),
+          description: ''
+        });
+        finalCollectionId = collectionData.collection.id;
+      }
 
-    let finalCollectionId = collectionId;
-    let finalNewCollectionName = newCollectionName.trim();
-
-    // If user is creating a new collection
-    if (creatingNewCollection && finalNewCollectionName) {
-      // Execute API call to create collection
-      const response = await fetch('http://127.0.0.1:5000/collections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ title: finalNewCollectionName })
-      });
-      const data = await response.json();
-      finalCollectionId = data.collection.id;
-    }
-
-    // Create the bookmark
-    const response = await fetch('http://127.0.0.1:5000/bookmarks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
+      await bookmarksAPI.create({
         url,
         description,
         collectionId: finalCollectionId,
-      })
-    });
+        title: url.split('/').pop() || 'New Bookmark'
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to create bookmark');
+      // Reset form
+      setUrl('');
+      setDescription('');
+      setCollectionId(collections[0]?.id || '');
+      setCreatingNewCollection(false);
+      setNewCollectionName('');
+
+      onSave();
+    } catch (error) {
+      console.error('Error creating bookmark:', error);
     }
-
-    onSave();
-
-    // Reset form
-    setUrl("");
-    setDescription("");
-    setCollectionId("general");
-    setCreatingNewCollection(false);
-    setNewCollectionName("");
   };
 
   return (
@@ -82,6 +82,21 @@ function AddBookmarkForm({ collections = [], onSave }) {
       className="bg-white p-4 rounded shadow-md space-y-3"
     >
       <h2 className="text-xl font-medium">Add Bookmark</h2>
+      {/* Title */}
+      <div>
+        <label htmlFor="title" className="block mb-1 font-medium">
+          Title
+        </label>
+        <input
+          id="title"
+          type="text"
+          className="w-full border rounded px-3 py-2"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Example Title"
+          required
+        />
+      </div>
 
       {/* URL */}
       <div>
@@ -99,33 +114,38 @@ function AddBookmarkForm({ collections = [], onSave }) {
         />
       </div>
 
-      {/* Collection Dropdown or New Collection Field */}
+      {/* Collection Dropdown */}
       <div>
         <label htmlFor="collection" className="block mb-1 font-medium">
           Collection
         </label>
-
-        {/* If not creating a new collection, show the dropdown */}
-        {!creatingNewCollection && (
+        
+        {isLoading ? (
+          <div className="border rounded w-full px-3 py-2 text-gray-500">
+            Loading collections...
+          </div>
+        ) : !creatingNewCollection && (
           <select
             id="collection"
             className="border rounded w-full px-3 py-2"
             value={collectionId}
             onChange={handleCollectionChange}
+            disabled={isLoading}
           >
-            <option value="general">General (Default)</option>
-            {collections.map((col) => (
-              <option key={col.id} value={col.id}>
-                {col.name}
-              </option>
-            ))}
-            <option value="new">
-              <FaPlus className="inline" /> New Collection...
-            </option>
+            {collections.length === 0 ? (
+              <option value="">No collections available</option>
+            ) : (
+              <>
+                {collections.map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.title}
+                  </option>
+                ))}
+              </>
+            )}
+            <option value="new">+ New Collection</option>
           </select>
         )}
-
-        {/* Creating a new collection? Show input field */}
         {creatingNewCollection && (
           <div className="mt-2">
             <input
@@ -140,7 +160,6 @@ function AddBookmarkForm({ collections = [], onSave }) {
               onClick={() => {
                 setCreatingNewCollection(false);
                 setNewCollectionName("");
-                setCollectionId("general");
               }}
               className="text-sm text-gray-500 mt-1 hover:text-gray-700"
             >

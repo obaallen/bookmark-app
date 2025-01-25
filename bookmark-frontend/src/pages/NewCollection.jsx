@@ -1,11 +1,34 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function NewCollection() {
   const [collectionName, setCollectionName] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
-    // TODO: Call your backend API to create a new collection
+    try {
+      const response = await fetch('http://127.0.0.1:5000/collections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: collectionName
+        })
+      });
+
+      if (response.ok) {
+        // Redirect to collections page on success
+        navigate('/collections');
+      } else {
+        throw new Error('Failed to create collection');
+      }
+    } catch (error) {
+      console.error('Error creating collection:', error);
+      alert('Failed to create collection. Please try again.');
+    }
     console.log("Creating new collection:", collectionName);
     setCollectionName("");
   };

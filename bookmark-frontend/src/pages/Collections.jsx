@@ -5,15 +5,15 @@ import { Link } from "react-router-dom";
  * A placeholder for fetching all collections from the backend.
  * In your real app, you'd call an API like:
  *
- *   const response = await fetch("/api/collections")
- *   const data = await response.json()
- *   return data
  */
-async function fetchCollectionsMock() {
-  return [
-    { id: 1, name: "Recipes", bookmarkCount: 5 },
-    { id: 2, name: "News", bookmarkCount: 3 },
-  ];
+async function fetchCollections() {
+  const response = await fetch('http://127.0.0.1:5000/collections', {
+    method: 'GET',
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'include'
+  });
+  const data = await response.json();
+  return data;
 }
 
 export default function Collections() {
@@ -21,7 +21,7 @@ export default function Collections() {
 
   useEffect(() => {
     // Fetch all collections on component mount
-    fetchCollectionsMock().then((data) => {
+    fetchCollections().then((data) => {
       setCollections(data);
     });
   }, []);
@@ -36,7 +36,7 @@ export default function Collections() {
             to={`/collections/${collection.id}`}
             className="bg-white rounded shadow p-4 hover:shadow-lg transition block"
           >
-            <h2 className="font-semibold mb-2">{collection.name}</h2>
+            <h2 className="font-semibold mb-2">{collection.title}</h2>
             <p className="text-sm text-gray-600">
               Bookmarks: {collection.bookmarkCount}
             </p>

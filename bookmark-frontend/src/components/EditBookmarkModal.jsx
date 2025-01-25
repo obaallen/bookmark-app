@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { bookmarksAPI } from "../services/api";
 
 export default function EditBookmarkModal({
   bookmark,
@@ -8,21 +9,26 @@ export default function EditBookmarkModal({
 }) {
   const [url, setUrl] = useState(bookmark.url);
   const [title, setTitle] = useState(bookmark.title);
-  const [description, setDescription] = useState(bookmark.description);
+  const [description, setDescription] = useState(bookmark.description || "");
   const [collectionId, setCollectionId] = useState(
     bookmark.collectionId || "general"
   );
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    e.stopPropagation(); // Prevent parent click events
-    onSave({
-      ...bookmark,
-      url,
-      title,
-      description,
-      collectionId,
-    });
+    try {
+      const updatedBookmark = await bookmarksAPI.update(bookmark.id, {
+        url,
+        title,
+        description,
+        collectionId,
+      });
+      onSave(updatedBookmark);
+      onClose();
+    } catch (error) {
+      setError(error.message || "Failed to update bookmark");
+    }
   };
 
   const handleCollectionChange = (e) => {

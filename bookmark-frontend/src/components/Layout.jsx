@@ -24,11 +24,25 @@ export default function Layout() {
   }, []);
 
   // Example logout handler
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Clear any auth token
     localStorage.removeItem("authToken");
-    // Navigate user to the login page
-    navigate("/login");
+    try {
+      const response = await fetch('http://127.0.0.1:5000/logout', {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include', 
+      });
+
+      if (response.ok) {
+        navigate("/login");
+      } else {
+        throw new Error('Logout failed');
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Logout failed. Please try again.");
+    }
   };
 
   return (

@@ -1,8 +1,11 @@
-const config = {
-  API_BASE_URL:
-    import.meta.env.MODE === "development"
-      ? "http://127.0.0.1:5000" // Use the /api prefix for development
-      : "", // Use relative URL for production
-};
+export const API_URL = 'http://127.0.0.1:5000';
 
-export default config;
+export const API_ROUTES = {
+  LOGIN: '/login',
+  REGISTER: '/register',
+  LOGOUT: '/logout',
+  CHECK_AUTH: '/check-auth',
+  BOOKMARKS: '/bookmarks',
+  COLLECTIONS: '/collections',
+  PREVIEW: '/preview'
+};

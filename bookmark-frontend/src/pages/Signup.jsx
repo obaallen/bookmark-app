@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
-import axiosInstance from "../axiosInstance";
+import { authAPI } from "../services/api";
 
 function Signup() {
   const navigate = useNavigate();
@@ -9,7 +9,7 @@ function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   // If already authenticated, redirect to dashboard
   useEffect(() => {
@@ -23,32 +23,19 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmation) {
-      alert("Passwords do not match");
+      setError("Passwords do not match");
       return;
     }
+
     try {
-      const response = await axiosInstance.post("/signup", {
-        email,
-        password,
-        confirmation,
-      });
-
-      console.log("Signup response:", response);
-
-      // Simulate successful signup
-      if (response.status === 200) {
-        setMessage(response.data.message);
-        setEmail("");
-        setPassword("");
-        setConfirmation("");
-        alert(response.data.message);
-        // Redirect to the homepage
-        navigate("/");
-      }
+      await authAPI.register(email, password);
+      setEmail("");
+      setPassword("");
+      setConfirmation("");
+      navigate("/login");
     } catch (error) {
       console.error("Signup failed:", error);
-      setMessage("Signup failed. Please try again.");
-      alert("Signup failed. Please try again.");
+      setError(error.message || "Signup failed. Please try again.");
     }
   };
 

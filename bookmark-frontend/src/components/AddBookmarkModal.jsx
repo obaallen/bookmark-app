@@ -1,56 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
-import useAuth from "../hooks/useAuth";
-import axiosInstance from "../axiosInstance";
 
-export default function AddBookmarkModal({ collections, onClose, onSave }) {
+export default function AddBookmarkModal({ onClose, onSave }) {
+  const [collections, setCollections] = useState([]); // Fetch and manage collections locally
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [collectionId, setCollectionId] = useState("general");
+  const [collectionId, setCollectionId] = useState(""); // Default is empty until collections are fetched
   const [creatingNewCollection, setCreatingNewCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Fetch collections when the modal is mounted
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/collections", {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
 
-    let finalCollectionId = collectionId;
-    if (creatingNewCollection && newCollectionName.trim()) {
-      // Execute API call to create collection
-      const response = await fetch('http://127.0.0.1:5000/collections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newCollectionName })
-      });
-      const data = await response.json();
-      finalCollectionId = data.collection.id;
-    }
+        if (!response.ok) {
+          throw new Error("Failed to fetch collections");
+        }
 
-    // Create the bookmark
-    const response = await fetch('http://127.0.0.1:5000/bookmarks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url,
-        description,
-        collectionId: finalCollectionId,
-      })
-    });
+        const data = await response.json();
+        setCollections(data || []);
+        if (data && data.length > 0) {
+          setCollectionId(data[0].id); // Set the default collectionId to the first collection
+        }
+      } catch (error) {
+        console.error("Error fetching collections:", error);
+      }
+    };
 
-    if (!response.ok) {
-      throw new Error('Failed to create bookmark');
-    }
-
-    onSave();
-
-    // Reset form and close modal
-    setUrl("");
-    setTitle("");
-    setDescription("");
-    setCollectionId("general");
-    setCreatingNewCollection(false);
-    setNewCollectionName("");
-  };
+    fetchCollections();
+  }, []);
 
   const handleCollectionChange = (e) => {
     const value = e.target.value;
@@ -60,6 +44,62 @@ export default function AddBookmarkModal({ collections, onClose, onSave }) {
     } else {
       setCreatingNewCollection(false);
       setCollectionId(value);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    let finalCollectionId = collectionId;
+
+    try {
+      // If creating a new collection, save it first
+      if (creatingNewCollection && newCollectionName.trim()) {
+        const response = await fetch("http://127.0.0.1:5000/collections", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ title: newCollectionName }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create new collection");
+        }
+
+        const data = await response.json();
+        finalCollectionId = data.collection.id;
+      }
+
+      // Create the bookmark
+      const response = await fetch("http://127.0.0.1:5000/bookmarks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          url,
+          title,
+          description,
+          collectionId: finalCollectionId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create bookmark");
+      }
+
+      // Notify parent component
+      onSave();
+      // close modal
+      onClose();
+      // // Reset form and close modal
+      // setUrl("");
+      // setTitle("");
+      // setDescription("");
+      // setCollectionId(collections[0]?.id || "");
+      // setCreatingNewCollection(false);
+      // setNewCollectionName("");
+    } catch (error) {
+      console.error("Error creating bookmark:", error);
     }
   };
 
@@ -74,6 +114,21 @@ export default function AddBookmarkModal({ collections, onClose, onSave }) {
         </button>
         <h2 className="text-xl font-bold mb-4">Add Bookmark</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Title */}
+          <div>
+            <label htmlFor="title" className="block mb-1 font-medium">
+              Title
+            </label>
+            <input
+              id="title"
+              type="text"
+              className="border rounded w-full px-3 py-2"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          {/* URL */}
           <div>
             <label htmlFor="url" className="block mb-1 font-medium">
               URL
@@ -88,19 +143,7 @@ export default function AddBookmarkModal({ collections, onClose, onSave }) {
             />
           </div>
 
-          <div>
-            <label htmlFor="title" className="block mb-1 font-medium">
-              Title
-            </label>
-            <input
-              id="title"
-              type="text"
-              className="border rounded w-full px-3 py-2"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
+          {/* Description */}
           <div>
             <label htmlFor="description" className="block mb-1 font-medium">
               Description
@@ -110,6 +153,7 @@ export default function AddBookmarkModal({ collections, onClose, onSave }) {
               className="border rounded w-full px-3 py-2"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder="Short description of the bookmark"
             />
           </div>
 
@@ -118,27 +162,23 @@ export default function AddBookmarkModal({ collections, onClose, onSave }) {
             <label htmlFor="collection" className="block mb-1 font-medium">
               Collection
             </label>
-            {!creatingNewCollection && (
+            {!creatingNewCollection ? (
               <select
                 id="collection"
                 className="border rounded w-full px-3 py-2"
                 value={collectionId}
                 onChange={handleCollectionChange}
               >
-                <option value="general">General (Default)</option>
                 {collections.map((col) => (
                   <option key={col.id} value={col.id}>
-                    {col.name}
+                    {col.title}
                   </option>
                 ))}
                 <option value="new">
                   <FaPlus className="inline" /> New Collection...
                 </option>
               </select>
-            )}
-
-            {/* Creating a new collection */}
-            {creatingNewCollection && (
+            ) : (
               <div className="mt-2">
                 <input
                   type="text"
@@ -152,7 +192,7 @@ export default function AddBookmarkModal({ collections, onClose, onSave }) {
                   onClick={() => {
                     setCreatingNewCollection(false);
                     setNewCollectionName("");
-                    setCollectionId("general");
+                    setCollectionId(collections[0]?.id || "");
                   }}
                   className="text-sm text-gray-500 mt-1 hover:text-gray-700"
                 >
@@ -162,6 +202,7 @@ export default function AddBookmarkModal({ collections, onClose, onSave }) {
             )}
           </div>
 
+          {/* Actions */}
           <div className="flex justify-end">
             <button
               onClick={onClose}

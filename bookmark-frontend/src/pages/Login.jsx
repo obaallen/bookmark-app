@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
-import axiosInstance from "../axiosInstance";
+import { authAPI } from "../services/api";
 
 function Login() {
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   // If already authenticated, redirect to dashboard
   useEffect(() => {
+    console.log("isAuthenticated:", isAuthenticated);
+    console.log("loading:", loading);
     if (!loading && isAuthenticated) {
       navigate("/");
     }
@@ -20,28 +23,10 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://127.0.0.1:5000/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        credentials: 'include', 
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setEmail("");
-        setPassword("");
-        alert(data.message);
-        navigate("/");
-      } else {
-        throw new Error('Login failed');
-      }
+      await authAPI.login(email, password);
+      navigate("/");
     } catch (error) {
-      console.error("Login failed:", error);
-      alert("Login failed. Please try again.");
+      setError(error.message || "Login failed");
     }
   };
 
