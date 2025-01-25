@@ -70,6 +70,16 @@ function Login() {
         >
           Log In
         </button>
+        {/* TODO: Add a link to the signup page */}
+        <p className="mt-2 text-sm text-gray-500">
+          Don't have an account?{" "}
+          <button
+            className="text-blue-500 hover:text-blue-600"
+            onClick={() => navigate("/signup")}
+          >
+            Sign up
+          </button>
+        </p>
       </form>
     </div>
   );

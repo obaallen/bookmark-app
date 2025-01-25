@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from flask_cors import CORS
-from helpers import apology, login_required
+from helpers import login_required
 from models import db, User, Collection, Bookmark
 from datetime import timedelta
 import requests
@@ -15,17 +15,10 @@ from urllib.parse import urljoin
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookmarks.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# Update secret key (use a real secret key in production)
-app.secret_key = 'your-secret-key-here'  
+app.secret_key = 'my-secret-key'  
 
 # Update session configuration
 app.config.update(
-    SESSION_COOKIE_SECURE=False,  # False for local development
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax',
-    SESSION_COOKIE_NAME='session',
-    SESSION_COOKIE_DOMAIN='127.0.0.1',  # Set this to match your API domain
-    SESSION_COOKIE_PATH='/',
     SESSION_TYPE='filesystem',
     PERMANENT_SESSION_LIFETIME=timedelta(days=7)
 )
@@ -40,19 +33,19 @@ CORS(app,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      expose_headers=["Set-Cookie"])
 
-@app.before_request
-def log_request_info():
-    print("== Before Request ==")
-    print("Request Cookies:", request.cookies)
-    print("Flask Session:", session)    
+# @app.before_request
+# def log_request_info():
+#     print("== Before Request ==")
+#     print("Request Cookies:", request.cookies)
+#     print("Flask Session:", session)    
 
-@app.after_request
-def log_cookie_header(response):
-    print("== After Request ==")
-    print("Set-Cookie Header:", response.headers.get("Set-Cookie"))
-    print("Flask Session now:", session)
-    print("CORS Headers:", response.headers)
-    return response
+# @app.after_request
+# def log_cookie_header(response):
+#     print("== After Request ==")
+#     print("Set-Cookie Header:", response.headers.get("Set-Cookie"))
+#     print("Flask Session now:", session)
+#     print("CORS Headers:", response.headers)
+#     return response
 
 @app.route("/signup", methods=["POST"])
 def signup():
@@ -180,6 +173,7 @@ def create_bookmark():
         return jsonify({'error': 'Failed to create bookmark'}), 500
 
 @app.route('/bookmarks', methods=['GET'])
+@login_required
 def get_bookmarks():
     bookmarks = Bookmark.query.join(Collection, Bookmark.collection_id == Collection.id).order_by(Bookmark.created_at.desc()).filter_by(user_id=session["user_id"]).all()
     result = []
@@ -196,6 +190,7 @@ def get_bookmarks():
     return jsonify(result), 200
 
 @app.route('/bookmarks/<int:bookmark_id>', methods=['GET'])
+@login_required
 def get_bookmark(bookmark_id):
     bookmark = Bookmark.query.join(Collection, Bookmark.collection_id == Collection.id).filter_by(user_id=session["user_id"]).get_or_404(bookmark_id)
     return jsonify({
@@ -207,14 +202,21 @@ def get_bookmark(bookmark_id):
     }), 200
 
 @app.route('/bookmarks/<int:bookmark_id>', methods=['PUT'])
+@login_required
 def update_bookmark(bookmark_id):
     data = request.get_json()
-    bookmark = Bookmark.query.filter_by(user_id=session["user_id"]).get_or_404(bookmark_id)
+    # First get the bookmark by ID, then check if it belongs to the user
+    bookmark = Bookmark.query.get_or_404(bookmark_id)
+    
+    # Check if the bookmark belongs to the current user
+    if bookmark.user_id != session["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
 
     bookmark.title = data.get('title', bookmark.title)
     bookmark.url = data.get('url', bookmark.url)
     bookmark.description = data.get('description', bookmark.description)
     bookmark.collection_id = data.get('collectionId', bookmark.collection_id)
+    
     db.session.commit()
 
     return jsonify({'message': 'Bookmark updated successfully', 'bookmark': {
@@ -226,14 +228,22 @@ def update_bookmark(bookmark_id):
     }}), 200
 
 @app.route('/bookmarks/<int:bookmark_id>', methods=['DELETE'])
+@login_required
 def delete_bookmark(bookmark_id):
-    bookmark = Bookmark.query.filter_by(user_id=session["user_id"]).get_or_404(bookmark_id)
+    # First get the bookmark, then check if it belongs to the user
+    bookmark = Bookmark.query.get_or_404(bookmark_id)
+    
+    # Check if the bookmark belongs to the current user
+    if bookmark.user_id != session["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+        
     db.session.delete(bookmark)
     db.session.commit()
-
-    return jsonify({'message': 'Bookmark deleted successfully'}), 200
+    
+    return jsonify({"message": "Bookmark deleted successfully"}), 200
 
 @app.route('/collections', methods=['POST'])
+@login_required
 def create_collection():
     data = request.get_json()
     title = data.get('title')
@@ -253,6 +263,7 @@ def create_collection():
     }}), 200
 
 @app.route('/collections', methods=['GET'])
+@login_required
 def get_collections():
     collections = Collection.query.order_by(Collection.created_at.desc()).filter_by(user_id=session["user_id"]).all()
     result = []
@@ -266,11 +277,13 @@ def get_collections():
     return jsonify(result), 200
 
 @app.route('/collections/<int:collection_id>', methods=['GET'])
+@login_required
 def get_collection_title(collection_id):
     collection_title = Collection.query.filter_by(user_id=session["user_id"]).get_or_404(collection_id).title
     return jsonify({'title': collection_title}), 200    
 
 @app.route('/collection_bookmarks/<int:collection_id>', methods=['GET'])
+@login_required
 def get_collection_bookmarks(collection_id):
     bookmarks = Bookmark.query.filter_by(collection_id=collection_id).all()
     collection_title = Collection.query.filter_by(user_id=session["user_id"]).get_or_404(collection_id).title
@@ -287,6 +300,7 @@ def get_collection_bookmarks(collection_id):
     return jsonify(result), 200
 
 @app.route('/preview', methods=['GET'])
+@login_required
 def get_preview():
     url = request.args.get('url')
     if not url:

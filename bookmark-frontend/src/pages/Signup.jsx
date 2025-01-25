@@ -92,6 +92,16 @@ function Signup() {
         >
           Sign Up
         </button>
+        {/* TODO: Add a link to the login page */}
+        <p className="mt-2 text-sm text-gray-500">
+          Already have an account?{" "}
+          <button
+            className="text-blue-500 hover:text-blue-600"
+            onClick={() => navigate("/login")}
+          >
+            Login
+          </button>
+        </p>
       </form>
     </div>
   );

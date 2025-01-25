@@ -24,16 +24,9 @@ export default function AllBookmarks() {
     fetchBookmarks();
   }, []);
 
-  const handleDeleteBookmark = async (bookmarkId, collectionId) => {
+  const handleDeleteBookmark = async (bookmarkId) => {
     try {
-      await bookmarksAPI.delete(bookmarkId);
-      setBookmarks((prev) =>
-        prev.map((col) =>
-          col.id === collectionId
-            ? { ...col, bookmarks: col.bookmarks.filter((bm) => bm.id !== bookmarkId) }
-            : col
-        )
-      );
+      setBookmarks(prev => prev.filter(bookmark => bookmark.id !== bookmarkId));
     } catch (error) {
       console.error('Error deleting bookmark:', error);
     }
@@ -82,7 +75,7 @@ export default function AllBookmarks() {
                   key={bookmark.id}
                   bookmark={bookmark}
                   onDelete={(bookmarkId) =>
-                    handleDeleteBookmark(bookmarkId, collection.collection_id)
+                    handleDeleteBookmark(bookmarkId)
                   }
                 />
               ))}

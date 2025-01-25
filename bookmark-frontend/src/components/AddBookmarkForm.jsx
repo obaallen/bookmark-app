@@ -60,7 +60,7 @@ function AddBookmarkForm({ onSave }) {
         url,
         description,
         collectionId: finalCollectionId,
-        title: url.split('/').pop() || 'New Bookmark'
+        title: title,
       });
 
       // Reset form
@@ -69,8 +69,7 @@ function AddBookmarkForm({ onSave }) {
       setCollectionId(collections[0]?.id || '');
       setCreatingNewCollection(false);
       setNewCollectionName('');
-
-      onSave();
+      window.location.reload();
     } catch (error) {
       console.error('Error creating bookmark:', error);
     }

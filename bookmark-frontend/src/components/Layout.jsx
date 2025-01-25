@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { FaCog } from "react-icons/fa";
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -110,34 +111,17 @@ export default function Layout() {
             onClick={() => setIsOpen(!isOpen)}
             className="flex items-center w-full focus:outline-none"
           >
-            <img
-              src="https://via.placeholder.com/40"
-              alt="User Avatar"
-              className="rounded-full w-10 h-10 mr-2"
+            <FaCog
+              size={24}
+              className="text-gray-400 mr-2"
             />
-            <span className="font-medium">John Doe</span>
+            <span className="font-medium">Settings</span>
             {/* Optional: Add a small dropdown icon here */}
           </button>
 
           {/* Dropdown Menu */}
           {isOpen && (
             <div className="absolute bottom-16 left-0 w-full bg-white text-black rounded shadow-md">
-              {/* My Account */}
-              <NavLink
-                to="/account"
-                className="block px-4 py-2 hover:bg-gray-100"
-                onClick={() => setIsOpen(false)}
-              >
-                My Account
-              </NavLink>
-              {/* Settings */}
-              <NavLink
-                to="/settings"
-                className="block px-4 py-2 hover:bg-gray-100"
-                onClick={() => setIsOpen(false)}
-              >
-                Settings
-              </NavLink>
               {/* Logout */}
               <button
                 onClick={() => {
