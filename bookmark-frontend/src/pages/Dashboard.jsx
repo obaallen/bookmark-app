@@ -17,14 +17,6 @@ function Dashboard() {
       <div>
         {/* Recent Collections Section */}
         <RecentCollections />
-
-        {/* Other sections like notes, todo, etc. */}
-        <div className="bg-white rounded shadow p-4">
-          <h2 className="text-xl font-semibold">Other Dashboard Section</h2>
-          <p className="text-sm text-gray-600">
-            Placeholder for additional dashboard content.
-          </p>
-        </div>
       </div>
     </div>
   );

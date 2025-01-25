@@ -6,21 +6,17 @@ import { bookmarksAPI } from "../services/api";
 export default function AllBookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [loading, setLoading] = useState(true);
+
+  const fetchBookmarks = async () => {
+    try {
+      const data = await bookmarksAPI.getAll();
+      setBookmarks(data);
+    } catch (error) {
+      console.error('Error fetching bookmarks:', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchBookmarks = async () => {
-      try {
-        setLoading(true);
-        const data = await bookmarksAPI.getAll();
-        setBookmarks(data);
-      } catch (error) {
-        console.error('Error fetching bookmarks:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBookmarks();
   }, []);
 
@@ -74,9 +70,7 @@ export default function AllBookmarks() {
                 <BookmarkCard
                   key={bookmark.id}
                   bookmark={bookmark}
-                  onDelete={(bookmarkId) =>
-                    handleDeleteBookmark(bookmarkId)
-                  }
+                  onDelete={handleDeleteBookmark}
                 />
               ))}
             </div>
@@ -90,7 +84,7 @@ export default function AllBookmarks() {
           onClose={() => setShowAddModal(false)}
           onSave={() => {
             setShowAddModal(false);
-            fetchBookmarks().then((data) => setBookmarks(data));
+            fetchBookmarks();
           }}
         />
       )}

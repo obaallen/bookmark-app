@@ -143,20 +143,6 @@ export default function AddBookmarkModal({ onClose, onSave }) {
             />
           </div>
 
-          {/* Description */}
-          <div>
-            <label htmlFor="description" className="block mb-1 font-medium">
-              Description
-            </label>
-            <textarea
-              id="description"
-              className="border rounded w-full px-3 py-2"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Short description of the bookmark"
-            />
-          </div>
-
           {/* Collection Dropdown */}
           <div>
             <label htmlFor="collection" className="block mb-1 font-medium">
@@ -200,6 +186,20 @@ export default function AddBookmarkModal({ onClose, onSave }) {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Description */}
+          <div>
+            <label htmlFor="description" className="block mb-1 font-medium">
+              Description
+            </label>
+            <textarea
+              id="description"
+              className="border rounded w-full px-3 py-2"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Short description of the bookmark"
+            />
           </div>
 
           {/* Actions */}
