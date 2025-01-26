@@ -4,8 +4,6 @@ import AddBookmarkForm from "../components/AddBookmarkForm";
 import RecentCollections from "../components/RecentCollections";
 
 function Dashboard() {
-  // Later, you might fetch the user’s bookmarks here
-  // or manage them via a global state/context
 
   return (
     <div className="min-h-screen p-4 space-y-6">

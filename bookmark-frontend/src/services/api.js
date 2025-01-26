@@ -17,7 +17,7 @@ const fetchWithAuth = async (endpoint, options = {}) => {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'An error occurred');
+    throw new Error(error.error || 'An error occurred');
   }
 
   return response.json();

@@ -84,7 +84,7 @@ const BookmarkCard = memo(({ bookmark, onDelete }) => {
       onClick={handleCardClick}
     >
       {/* Preview Image */}
-      <div className="mb-3 relative aspect-video bg-gray-100 rounded overflow-hidden">
+      <div className="mb-2 relative aspect-video bg-gray-100 rounded overflow-hidden">
         {!inView || loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="animate-pulse bg-gray-200 w-full h-full"></div>
@@ -106,8 +106,8 @@ const BookmarkCard = memo(({ bookmark, onDelete }) => {
 
       {/* Content */}
       <div className="flex-grow">
-        <h3 className="text-md font-semibold mb-1">
-          {preview?.title || bookmark.title || bookmark.url}
+        <h3 className="text-sm font-semibold mb-1 line-clamp-1">
+          {bookmark.title}
         </h3>
         <p className="text-sm text-gray-600 line-clamp-2">
           {preview?.description || bookmark.description}
@@ -115,20 +115,20 @@ const BookmarkCard = memo(({ bookmark, onDelete }) => {
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end mt-4 space-x-2">
+      <div className="flex justify-end mt-2 space-x-1">
         <button
           onClick={handleEditClick}
           className="text-gray-400 hover:text-gray-600"
           title="Edit Bookmark"
         >
-          <FaPen size={16} />
+          <FaPen size={12} />
         </button>
         <button
           onClick={handleDelete}
           className="text-gray-400 hover:text-red-600"
           title="Delete Bookmark"
         >
-          <FaTrash size={16} />
+          <FaTrash size={12} />
         </button>
       </div>
 

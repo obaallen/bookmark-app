@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-/**
- * A placeholder for fetching all collections from the backend.
- * In your real app, you'd call an API like:
- *
- */
+
 async function fetchCollections() {
   const response = await fetch('http://127.0.0.1:5000/collections', {
     method: 'GET',
@@ -17,6 +13,7 @@ async function fetchCollections() {
 }
 
 export default function Collections() {
+  const navigate = useNavigate();
   const [collections, setCollections] = useState([]);
 
   useEffect(() => {
@@ -27,8 +24,17 @@ export default function Collections() {
   }, []);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Collections</h1>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">All Collections</h1>
+        <button
+          onClick={() => navigate('/collections/new')}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          + Add Collection
+        </button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {collections.map((collection) => (
           <Link
@@ -38,7 +44,7 @@ export default function Collections() {
           >
             <h2 className="font-semibold mb-2">{collection.title}</h2>
             <p className="text-sm text-gray-600">
-              Bookmarks: {collection.bookmarkCount}
+              Create Date: {new Date(collection.created_at).toLocaleDateString()}
             </p>
           </Link>
         ))}

@@ -53,6 +53,11 @@ function AddBookmarkForm({ onSave }) {
           title: newCollectionName.trim(),
           description: ''
         });
+        console.log("collectionData", collectionData);
+        if (!collectionData.ok) {
+          alert(`aaaaaa: ${collectionData.statusText}`);
+          throw new Error(collectionData.statusText);
+        }
         finalCollectionId = collectionData.collection.id;
       }
 
@@ -72,6 +77,7 @@ function AddBookmarkForm({ onSave }) {
       window.location.reload();
     } catch (error) {
       console.error('Error creating bookmark:', error);
+      alert(`${error.message}`);
     }
   };
 

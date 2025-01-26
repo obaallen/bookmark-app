@@ -7,8 +7,6 @@ import Collections from "./pages/Collections";
 import CollectionDetail from "./pages/CollectionDetail";
 import NewCollection from "./pages/NewCollection";
 import AllBookmarks from "./pages/AllBookmarks";
-import Account from "./pages/Account";
-import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
@@ -29,9 +27,6 @@ function App() {
           <Route path="collections/:collectionId" element={<CollectionDetail />} />
           <Route path="all-bookmarks" element={<AllBookmarks />} />
 
-          {/* Profile/Account Management */}
-          <Route path="account" element={<Account />} />
-          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>

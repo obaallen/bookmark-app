@@ -1,35 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
-
+import { collectionsAPI } from "../services/api";
+import { bookmarksAPI } from "../services/api";
 export default function AddBookmarkModal({ onClose, onSave }) {
-  const [collections, setCollections] = useState([]); // Fetch and manage collections locally
+  const [collections, setCollections] = useState([]); 
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [collectionId, setCollectionId] = useState(""); // Default is empty until collections are fetched
+  const [collectionId, setCollectionId] = useState(""); 
   const [creatingNewCollection, setCreatingNewCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
 
-  // Fetch collections when the modal is mounted
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:5000/collections", {
-          credentials: "include",
-          headers: { Accept: "application/json" },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch collections");
-        }
-
-        const data = await response.json();
-        setCollections(data || []);
-        if (data && data.length > 0) {
-          setCollectionId(data[0].id); // Set the default collectionId to the first collection
+        const data = await collectionsAPI.getAll();
+        setCollections(data);
+        if (data.length > 0) {
+          setCollectionId(data[0].id);
         }
       } catch (error) {
-        console.error("Error fetching collections:", error);
+        console.error('Error fetching collections:', error);
       }
     };
 
@@ -55,11 +46,8 @@ export default function AddBookmarkModal({ onClose, onSave }) {
     try {
       // If creating a new collection, save it first
       if (creatingNewCollection && newCollectionName.trim()) {
-        const response = await fetch("http://127.0.0.1:5000/collections", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ title: newCollectionName }),
+        const response = await collectionsAPI.create({
+          title: newCollectionName.trim()
         });
 
         if (!response.ok) {
@@ -71,16 +59,11 @@ export default function AddBookmarkModal({ onClose, onSave }) {
       }
 
       // Create the bookmark
-      const response = await fetch("http://127.0.0.1:5000/bookmarks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          url,
-          title,
-          description,
-          collectionId: finalCollectionId,
-        }),
+      const response = await bookmarksAPI.create({
+        url,
+        title,
+        description,
+        collectionId: finalCollectionId,
       });
 
       if (!response.ok) {
@@ -91,15 +74,9 @@ export default function AddBookmarkModal({ onClose, onSave }) {
       onSave();
       // close modal
       onClose();
-      // // Reset form and close modal
-      // setUrl("");
-      // setTitle("");
-      // setDescription("");
-      // setCollectionId(collections[0]?.id || "");
-      // setCreatingNewCollection(false);
-      // setNewCollectionName("");
     } catch (error) {
       console.error("Error creating bookmark:", error);
+      alert(`${error.message}`);
     }
   };
 
@@ -148,23 +125,29 @@ export default function AddBookmarkModal({ onClose, onSave }) {
             <label htmlFor="collection" className="block mb-1 font-medium">
               Collection
             </label>
-            {!creatingNewCollection ? (
+            
+            {!creatingNewCollection && (
               <select
                 id="collection"
                 className="border rounded w-full px-3 py-2"
                 value={collectionId}
                 onChange={handleCollectionChange}
               >
-                {collections.map((col) => (
-                  <option key={col.id} value={col.id}>
-                    {col.title}
-                  </option>
-                ))}
-                <option value="new">
-                  <FaPlus className="inline" /> New Collection...
-                </option>
+                {collections.length === 0 ? (
+                  <option value="">No collections available</option>
+                ) : (
+                  <>
+                    {collections.map((collection) => (
+                      <option key={collection.id} value={collection.id}>
+                        {collection.title}
+                      </option>
+                    ))}
+                  </>
+                )}
+                <option value="new">+ New Collection</option>
               </select>
-            ) : (
+            )}
+            {creatingNewCollection && (
               <div className="mt-2">
                 <input
                   type="text"
@@ -178,7 +161,6 @@ export default function AddBookmarkModal({ onClose, onSave }) {
                   onClick={() => {
                     setCreatingNewCollection(false);
                     setNewCollectionName("");
-                    setCollectionId(collections[0]?.id || "");
                   }}
                   className="text-sm text-gray-500 mt-1 hover:text-gray-700"
                 >

@@ -250,6 +250,11 @@ def create_collection():
     description = data.get('description', '')
     if not title:
         return jsonify({'error': 'Collection name is required'}), 400
+    
+    # prevent duplicate collection titles
+    existing_collection = Collection.query.filter_by(title=title, user_id=session["user_id"]).first()
+    if existing_collection:
+        return jsonify({'error': 'Collection with this name already exists'}), 400
 
     collection = Collection(title=title, description=description, user_id=session["user_id"])
     db.session.add(collection)
@@ -279,14 +284,24 @@ def get_collections():
 @app.route('/collections/<int:collection_id>', methods=['GET'])
 @login_required
 def get_collection_title(collection_id):
-    collection_title = Collection.query.filter_by(user_id=session["user_id"]).get_or_404(collection_id).title
-    return jsonify({'title': collection_title}), 200    
+    collection = Collection.query.get_or_404(collection_id)
+
+    # Check if the collection belongs to the current user
+    if collection.user_id != session["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+        
+    return jsonify({'title': collection.title}), 200    
 
 @app.route('/collection_bookmarks/<int:collection_id>', methods=['GET'])
 @login_required
 def get_collection_bookmarks(collection_id):
     bookmarks = Bookmark.query.filter_by(collection_id=collection_id).all()
-    collection_title = Collection.query.filter_by(user_id=session["user_id"]).get_or_404(collection_id).title
+    collection = Collection.query.get_or_404(collection_id)
+
+    # Check if the collection belongs to the current user
+    if collection.user_id != session["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     result = []
     for bookmark in bookmarks:
         result.append({
@@ -295,7 +310,7 @@ def get_collection_bookmarks(collection_id):
             'url': bookmark.url,
             'description': bookmark.description,
             'created_at': bookmark.created_at,
-            'collection_title': collection_title
+            'collection_title': collection.title
         })
     return jsonify(result), 200
 
