@@ -83,7 +83,7 @@ const BookmarkCard = memo(({ bookmark, onDelete }) => {
       className="bg-white p-4 rounded shadow cursor-pointer hover:shadow-lg relative flex flex-col h-full"
       onClick={handleCardClick}
     >
-      {/* Preview Image */}
+      {/* Preview Image with help & guidancefrom Claude AI */}
       <div className="mb-2 relative aspect-video bg-gray-100 rounded overflow-hidden">
         {!inView || loading ? (
           <div className="absolute inset-0 flex items-center justify-center">

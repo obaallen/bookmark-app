@@ -44,7 +44,7 @@ export default function Layout() {
         {/* Top Section */}
         <div>
           <div className="p-4 font-bold text-xl border-b border-gray-700">
-            My Bookmark App
+            BookmarkHub
           </div>
           {/* Main Navigation */}
           <nav className="p-4 flex-grow">

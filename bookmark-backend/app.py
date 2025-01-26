@@ -317,6 +317,10 @@ def get_collection_bookmarks(collection_id):
 @app.route('/preview', methods=['GET'])
 @login_required
 def get_preview():
+    """
+    Get preview data for a bookmark
+    with help & guidance from Claude AI
+    """
     url = request.args.get('url')
     if not url:
         return jsonify({'error': 'URL is required'}), 400
