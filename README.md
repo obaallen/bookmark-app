@@ -10,6 +10,5 @@ This project was built using Flask, React, and SQlite3 with SQLAlchemy as the OR
 - Users can sign up, login, and logout
 - Users can create bookmarks, and add them to collections
 - Users can add a description, and see a preview image for their bookmarks
-- Users can delete bookmarks and collections
-- Users can edit bookmarks
+- Users can edit and delete bookmarks
 - Users can view bookmarks in collections
