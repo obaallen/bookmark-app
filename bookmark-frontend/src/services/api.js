@@ -30,14 +30,14 @@ export const authAPI = {
       body: JSON.stringify({ email, password })
     }),
 
-  register: (email, password) =>
-    fetchWithAuth(API_ROUTES.REGISTER, {
+  signup: (email, password, confirmation) =>
+    fetchWithAuth(API_ROUTES.SIGNUP, {
       method: 'POST',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, confirmation })
     }),
 
   logout: () => 
-    fetchWithAuth(API_ROUTES.LOGOUT, { method: 'POST' }),
+    fetchWithAuth(API_ROUTES.LOGOUT),
 
   checkAuth: () => 
     fetchWithAuth(API_ROUTES.CHECK_AUTH)
@@ -72,10 +72,16 @@ export const collectionsAPI = {
   getAll: () => 
     fetchWithAuth(API_ROUTES.COLLECTIONS),
 
+  get: (id) =>
+    fetchWithAuth(`${API_ROUTES.COLLECTIONS}/${id}`),
+
   create: (collectionData) =>
     fetchWithAuth(API_ROUTES.COLLECTIONS, {
       method: 'POST',
       body: JSON.stringify(collectionData)
-    })
+    }),
+
+  getBookmarks: (id) =>
+    fetchWithAuth(`${API_ROUTES.COLLECTION_BOOKMARKS}/${id}`)
 };
 

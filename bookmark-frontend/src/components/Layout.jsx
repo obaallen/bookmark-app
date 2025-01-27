@@ -25,12 +25,8 @@ export default function Layout() {
   const handleLogout = async () => {
     localStorage.removeItem("authToken");
     try {
-      const response = await authAPI.logout();
-      if (response.ok) {
-        navigate("/login");
-      } else {
-        throw new Error("Logout failed");
-      }
+      await authAPI.logout();
+      navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
       alert("Logout failed. Please try again.");

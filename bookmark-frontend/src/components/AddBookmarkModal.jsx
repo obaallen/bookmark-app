@@ -49,26 +49,16 @@ export default function AddBookmarkModal({ onClose, onSave }) {
         const response = await collectionsAPI.create({
           title: newCollectionName.trim()
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to create new collection");
-        }
-
-        const data = await response.json();
-        finalCollectionId = data.collection.id;
+        finalCollectionId = response.collection.id;
       }
 
       // Create the bookmark
-      const response = await bookmarksAPI.create({
+      await bookmarksAPI.create({
         url,
         title,
         description,
         collectionId: finalCollectionId,
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to create bookmark");
-      }
 
       // Notify parent component
       onSave();

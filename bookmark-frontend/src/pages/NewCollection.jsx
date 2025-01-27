@@ -9,16 +9,10 @@ export default function NewCollection() {
   const handleSubmit = async(e) => {
     e.preventDefault();
     try {
-      const response = await collectionsAPI.create({
+      await collectionsAPI.create({
         title: collectionName
       });
-
-      if (response.ok) {
-        // Redirect to collections page on success
-        navigate('/collections');
-      } else {
-        throw new Error(response.statusText);
-      }
+      navigate('/collections');
     } catch (error) {
       console.error('Error creating collection:', error);
       alert(`${error.message}`);

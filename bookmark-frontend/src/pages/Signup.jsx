@@ -28,7 +28,7 @@ function Signup() {
     }
 
     try {
-      await authAPI.register(email, password);
+      await authAPI.signup(email, password, confirmation);
       setEmail("");
       setPassword("");
       setConfirmation("");

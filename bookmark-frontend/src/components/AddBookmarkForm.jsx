@@ -53,11 +53,6 @@ function AddBookmarkForm({ onSave }) {
           title: newCollectionName.trim(),
           description: ''
         });
-        console.log("collectionData", collectionData);
-        if (!collectionData.ok) {
-          alert(`aaaaaa: ${collectionData.statusText}`);
-          throw new Error(collectionData.statusText);
-        }
         finalCollectionId = collectionData.collection.id;
       }
 

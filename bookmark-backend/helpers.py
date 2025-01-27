@@ -1,6 +1,6 @@
 import requests
 
-from flask import redirect, render_template, session, jsonify
+from flask import session, jsonify
 from functools import wraps
 
 

@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { collectionsAPI } from "../services/api";
 
 
 async function fetchCollections() {
-  const response = await fetch('http://127.0.0.1:5000/collections', {
-    method: 'GET',
-    headers: {'Content-Type': 'application/json'},
-    credentials: 'include'
-  });
-  const data = await response.json();
-  return data;
+  return collectionsAPI.getAll();
 }
 
 export default function Collections() {
